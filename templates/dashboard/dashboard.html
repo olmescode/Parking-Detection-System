@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema de Monitoreo{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="slots-grid">
+        {% if current_camera %}
+            {% for space in current_camera.spaces.all %}
+            <div class="slot-card available" data-slot="{{ space.number }}">
+                <span class="slot-number">Slot {{ space.number }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            {% for i in "12345678" %}
+            <div class="slot-card available">
+                <span class="slot-number">Slot {{ forloop.counter }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="dashboard-workspace">
+        <div class="video-container" id="video-container">
+            {% if current_camera %}
+            <img id="dashboard-stream" src="{% url 'camera_feed' current_camera.id %}" alt="Cámara en vivo">
+            <canvas id="detection-canvas"></canvas>
+            {% else %}
+            <div class="placeholder">
+                <p>Sin cámara configurada</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="dashboard-sidebar">
+            <div class="info-panel">
+                <h3>Estado</h3>
+                {% if current_camera %}
+                <p><strong>Cámara:</strong> {{ current_camera.name }}</p>
+                <p><strong>Espacios:</strong> {{ current_camera.spaces.count }}</p>
+                <p><strong>Creada:</strong> {{ current_camera.created_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Actualizada:</strong> {{ current_camera.updated_at|date:"d/m/Y H:i" }}</p>
+                {% else %}
+                <p>No hay cámara seleccionada</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="camera-controls">
+        <div class="controls-center">
+            <button class="btn-camera" onclick="previousCamera()">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11 1L5 8l6 7V1z"/>
+                </svg>
+            </button>
+            <button class="btn-camera btn-camera--power" onclick="logout()">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M7.5 1v7h1V1h-1z"/>
+                    <path d="M4.546 4.646a.5.5 0 1 1 .708.708 3.5 3.5 0 1 0 4.95 0 .5.5 0 1 1 .708-.708 4.5 4.5 0 1 1-6.366 0z"/>
+                </svg>
+            </button>
+            <button class="btn-camera" onclick="nextCamera()">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5 1v14l6-7-6-7z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="controls-right">
+            <button class="btn-icon" onclick="openAddCamera()">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+            </button>
+            <button class="btn-icon" onclick="openSettings()">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="addCameraModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Agregar Cámara</h2>
+            <button class="btn-close" onclick="closeAddCamera()">&times;</button>
+        </div>
+        <form id="cameraForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Nombre:</label>
+                <input type="text" name="name" id="camera-name" value="Nueva Cámara" required>
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="type" value="usb"> Cámara USB</label>
+                    <label><input type="radio" name="type" value="ip"> Cámara IP</label>
+                </div>
+                <button type="button" class="btn-file" onclick="startCalibration()">Calibrar</button>
+            </div>
+            <div class="form-group" id="url-group" style="display:none">
+                <label>URL:</label>
+                <input type="text" name="url" id="camera-url" placeholder="rtsp://192.168.1.100:554/stream">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeAddCamera()">Cancelar</button>
+                <button type="button" class="btn-primary" id="acceptBtn" onclick="acceptCamera()" disabled>Aceptar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Configuración</h2>
+            <button class="btn-close" onclick="closeSettings()">&times;</button>
+        </div>
+        <div class="cameras-list">
+            {% for camera in cameras %}
+            <div class="camera-item">
+                <div>
+                    <strong>{{ camera.name }}</strong>
+                    <p>Espacios: {{ camera.spaces.count }}</p>
+                </div>
+                <div>
+                    <button class="btn-primary" onclick="window.location.href='{% url 'calibrate' camera.id %}'">Recalibrar</button>
+                    <button class="btn-danger" onclick="deleteCamera({{ camera.id }})">Eliminar</button>
+                </div>
+            </div>
+            {% empty %}
+            <p>No hay cámaras</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+window.currentCameraId = {{ current_camera.id|default:0 }};
+window.cameraIds = [{% for cam in cameras %}{{ cam.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
+</script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

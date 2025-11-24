@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calibrar - {{ camera.name }}{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="calibrate-container">
+    <h2>Calibrar Espacios - {{ camera.name }}</h2>
+    
+    <div class="calibrate-workspace">
+        <div class="video-container">
+            <img id="video-stream" src="{% url 'camera_feed' camera.id %}" alt="Stream">
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="instructions">
+                <h3>Instrucciones:</h3>
+                <ol>
+                    <li>Dibuja rectángulos sobre cada espacio de estacionamiento</li>
+                    <li>Espera hasta que el estacionamiento esté lo más vacío posible</li>
+                    <li>Click en "Capturar Referencia" en ese momento</li>
+                    <li>Click en "Guardar" para finalizar</li>
+                </ol>
+            </div>
+            
+            <div class="info">
+                <p>Espacios marcados: <strong id="space-count">0</strong></p>
+                <p id="reference-status">Falta capturar referencia</p>
+            </div>
+            
+            <div class="buttons">
+                <button id="capture-btn" onclick="captureReference()">Capturar Referencia</button>
+                <button id="save-btn" onclick="saveCalibration()" disabled>Guardar</button>
+                <button id="cancel-btn" onclick="window.location.href='{% url 'dashboard' %}'">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.calibrateSaveUrl = "{% url 'calibrate_save' camera.id %}";
+window.dashboardUrl = "{% url 'dashboard' %}";
+</script>
+<script src="{% static 'js/calibrate.js' %}"></script>
+{% endblock %}

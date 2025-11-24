@@ -1,0 +1,86 @@
+SISTEMA DE ESTACIONAMIENTO - DOCUMENTACIÓN FINAL DEL PROYECTO
+
+1. VISIÓN GENERAL Y GESTIÓN DEL PROYECTO
+----------------------------------------
+Este proyecto fue desarrollado para la clase de Construcción de Software. El objetivo principal es crear un sistema automatizado que detecte espacios de estacionamiento disponibles utilizando visión por computadora. En lugar de usar sensores costosos para cada lugar, utilizamos una sola cámara para monitorear múltiples espacios.
+
+Objetivos:
+- Construir una interfaz web para monitorear el estado del estacionamiento en tiempo real.
+- Implementar algoritmos de visión por computadora para detectar si un espacio está ocupado.
+- Permitir a los usuarios configurar y calibrar fácilmente los espacios de estacionamiento a través de la interfaz.
+- Soportar diferentes fuentes de video (Archivos de video, Webcams USB, Cámaras IP).
+
+Alcance:
+El sistema es una aplicación web construida con Django. Procesa las fuentes de video cuadro por cuadro, las compara con una imagen de referencia y determina la ocupación basándose en las diferencias de píxeles. Incluye autenticación de usuarios para asegurar el panel de control.
+
+2. GUÍA TÉCNICA
+---------------
+El sistema está construido utilizando Python y el framework Django. Sigue una arquitectura modular.
+
+Stack Tecnológico:
+- Lenguaje: Python 3.x
+- Framework Web: Django 5.2
+- Visión por Computadora: OpenCV (cv2), NumPy
+- Base de Datos: SQLite (puede cambiarse a PostgreSQL/MySQL)
+- Frontend: HTML5, CSS3, JavaScript
+
+Estructura del Proyecto:
+- `apps/authentication`: Maneja el inicio de sesión y la seguridad de los usuarios.
+- `apps/dashboard`: Gestiona la interfaz principal y la herramienta de calibración.
+- `apps/detection`: Contiene la lógica central (`detector.py`) para procesar los cuadros de video.
+- `apps/parking`: Define los modelos de datos (`Camera`, `ParkingSpace`).
+- `media/`: Almacena las imágenes de referencia utilizadas para la detección.
+
+Cómo Funciona la Detección:
+El sistema utiliza una técnica de "Imagen de Referencia". Cuando calibras una cámara, guarda una instantánea del estacionamiento vacío. El detector compara el cuadro de video actual con esta referencia. Si hay una diferencia significativa en el área de un espacio de estacionamiento específico (debido a que hay un auto allí), marca el espacio como "Ocupado".
+
+3. GUÍA DE INSTALACIÓN
+----------------------
+Sigue estos pasos para configurar el proyecto en tu máquina local.
+
+Prerrequisitos:
+- Python instalado (versión 3.8 o superior recomendada).
+- Git (opcional, para clonar el repositorio).
+
+Pasos:
+1. Descarga o clona el código fuente.
+2. Abre una terminal en la carpeta del proyecto.
+3. Crea un entorno virtual (opcional pero recomendado):
+   python -m venv venv
+   source venv/bin/activate  (o `venv\Scripts\activate` en Windows)
+
+4. Instala las librerías requeridas:
+   pip install -r requirements.txt
+
+5. Configura la base de datos:
+   python manage.py migrate
+
+6. Crea una cuenta de administrador (para iniciar sesión):
+   python manage.py createsuperuser
+
+7. Ejecuta el servidor de desarrollo:
+   python manage.py runserver
+
+8. Abre tu navegador y ve a: http://127.0.0.1:8000
+
+4. GUÍA DE USO
+--------------
+Una vez que el sistema esté funcionando, aquí te explicamos cómo usarlo:
+
+1. Iniciar Sesión: Usa las credenciales de superusuario que creaste durante la instalación.
+2. Panel Principal (Dashboard): Verás el panel principal. Inicialmente, puede estar vacío.
+3. Agregar Cámara:
+   - Haz clic en el botón "Agregar Cámara" o similar.
+   - Elige el tipo: "Video" (para probar con un archivo), "USB" (para una webcam) o "IP" (para CCTV).
+   - Si usas un archivo de video, asegúrate de que el archivo exista en la carpeta del proyecto o en la carpeta media.
+4. Calibración (Importante):
+   - Antes de que el sistema funcione, necesitas indicarle dónde están los espacios de estacionamiento.
+   - Ve a la vista de calibración de tu cámara.
+   - Haz clic y arrastra para dibujar rectángulos sobre los espacios de estacionamiento.
+   - Asigna un número a cada espacio.
+   - Haz clic en "Guardar". Esto también guardará la vista actual como la "Imagen de Referencia" (asegúrate de que el estacionamiento esté vacío o tenlo en cuenta).
+5. Monitoreo:
+   - Regresa al Dashboard.
+   - Verás la transmisión de video con superposiciones.
+   - Cuadro Verde = Espacio Libre.
+   - Cuadro Rojo = Espacio Ocupado.
